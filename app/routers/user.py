@@ -57,7 +57,7 @@ def user_get(id: int,get_current_user:User = Depends(get_current_user)):
 
 
 @router_user.post('/add', response_model=ShowUser, status_code=status.HTTP_201_CREATED)
-def user_post(user: User):
+def user_post(user: User,get_current_user:User = Depends(get_current_user)):
     hashed_password = pwd_context.hash(user.password)
     user = UserDB(
                   name=user.name,

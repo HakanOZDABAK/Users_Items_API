@@ -4,4 +4,5 @@ sqlalchemy
 passlib
 bcrypt
 python-jose
+psycopg2-binary
 python-multipart
