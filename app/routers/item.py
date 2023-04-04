@@ -1,7 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
-from app.JWT.oat2 import get_current_user
-from app.JWT.token import create_access_token
+from fastapi import APIRouter, HTTPException, status
 from app.schemas.item import Item
 from app.databases.models.item import Item as ItemDB
 from app.databases.database_setup import SessionLocal
@@ -12,8 +10,14 @@ router_item = APIRouter(
     tags=['Items']
 
 )
-router_item_categorical = APIRouter(
-    prefix='/items_by',
+router_get_item_by_categorical = APIRouter(
+    prefix='/items_get_by',
+    tags=['Items']
+
+)
+
+router_get_item_by_name = APIRouter(
+    prefix='/items_get_by_name',
     tags=['Items']
 
 )
@@ -23,13 +27,13 @@ db = SessionLocal()
 
 
 @router_item.get("/", response_model=List[Item], status_code=status.HTTP_200_OK)
-def all_item_get(get_current_user:User = Depends(get_current_user)):
+def all_item_get():
     items = db.query(ItemDB).all()
     return items
 
 
 @router_item.get('/{id}', response_model=Item, status_code=status.HTTP_200_OK)
-def item_get(id: int,get_current_user:User = Depends(get_current_user)):
+def item_get(id: int,):
     item = db.query(ItemDB).filter(ItemDB.id == id).first()
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -39,7 +43,7 @@ def item_get(id: int,get_current_user:User = Depends(get_current_user)):
 
 
 @router_item.post('/add',response_model=Item, status_code=status.HTTP_201_CREATED)
-def item_post(item: Item,get_current_user:User = Depends(get_current_user)):
+def item_post(item: Item,):
     item = ItemDB(
                   name = item.name,
                   price = item.price,
@@ -52,7 +56,7 @@ def item_post(item: Item,get_current_user:User = Depends(get_current_user)):
 
 
 @router_item.delete('/delete/{id}', status_code=status.HTTP_200_OK)
-def item_delete(id: int,get_current_user:User = Depends(get_current_user)):
+def item_delete(id: int,):
     item = db.query(ItemDB).filter(ItemDB.id == id).first()
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -62,8 +66,8 @@ def item_delete(id: int,get_current_user:User = Depends(get_current_user)):
     return f"Item with id = {id} deleted"
 
 
-@router_item_categorical.get('/{category}',response_model=List[Item])
-def get_item_by_category(category:str,get_current_user:User = Depends(get_current_user)):
+@router_get_item_by_categorical.get('/{category}',response_model=List[Item])
+def get_item_by_categorical(category:str,):
     items = db.query(ItemDB).filter(ItemDB.category == category).all()
     if items is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -71,3 +75,9 @@ def get_item_by_category(category:str,get_current_user:User = Depends(get_curren
 
 
 
+@router_get_item_by_name.get('/{name}',response_model = Item)
+def get_item_by_name(name:str):
+    item = db.query(ItemDB).filter(ItemDB.name==name).first()
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return item
